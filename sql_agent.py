@@ -50,7 +50,7 @@ def validate_sql(sql_text: str) -> Optional[str]:
     if is_destructive(sql_no_semi):
         return "Destructive SQL operations are not permitted."
 
-    # NEW: only one statement allowed (blocks "SELECT 1; SELECT ..." tricks).
+    # Only one statement allowed (blocks "SELECT 1; SELECT ..." tricks).
     if ";" in sql_no_semi:
         return "Multiple SQL statements are not permitted."
 
@@ -100,8 +100,8 @@ def validate_sql(sql_text: str) -> Optional[str]:
 
 def find_unknown_tables(sql_text: str, schema: dict) -> list:
     """
-    NEW: return table names used in FROM/JOIN that do NOT exist in the
-    active database schema. This is what stops the 'employees' hallucination.
+    Return table names used in FROM/JOIN that do NOT exist in the
+    active database schema. This stops table hallucinations.
     """
     known = {t.lower() for t in schema}
     cleaned = re.sub(r"EXTRACT\s*\([^)]*\)", " ", sql_text, flags=re.IGNORECASE)
@@ -321,14 +321,10 @@ def validate_requested_conditions(
 
 
 # ============================================================
-# 5. TABLE RESOLUTION (schema-first)  <-- ROOT-CAUSE FIX
+# 5. TABLE RESOLUTION (schema-first)
 # ============================================================
-# OLD behaviour: hard-coded keyword lists decided the table. Substring
-# matching + "raise error if entity table missing" caused false errors
-# (e.g. "order by" -> "no 'order' table", staff/salary words -> 'employees').
-#
-# NEW behaviour: look at the ACTUAL tables/columns of the connected DB
-# and score them. Keywords only add weight to tables that really exist.
+# Looks at the ACTUAL tables/columns of the connected DB and scores them.
+# Keywords only add weight to tables that really exist.
 
 # entity -> (weight, keywords). An entity applies to tables whose name contains it.
 ENTITY_INTENTS = {
@@ -354,6 +350,12 @@ UNAVAILABLE_ENTITIES = [
     "customer", "customers", "order", "orders", "invoice", "invoices",
     "sales", "product", "products", "inventory",
 ]
+
+# Phrases that mean "list the tables in this database".
+TABLE_LIST_PHRASES = {
+    "show tables", "list tables", "tables", "get tables",
+    "show all tables", "list all tables", "get all tables",
+}
 
 
 def _has_word(text_lower: str, word: str) -> bool:
@@ -552,9 +554,8 @@ def generate_schema_aware_sql(
         "show status",
     )
 
-    table_list_phrases = {"show tables", "list tables", "tables", "get tables"}
     is_table_list_request = (
-        re.sub(r"[\.\?!;]+$", "", q_raw).strip().lower() in table_list_phrases
+        re.sub(r"[\.\?!;]+$", "", q_raw).strip().lower() in TABLE_LIST_PHRASES
     )
 
     if q_raw.lower().startswith(raw_prefixes) and not is_table_list_request:
@@ -569,7 +570,7 @@ def generate_schema_aware_sql(
     q_lower = q_stripped.lower()
 
     # Show available tables.
-    if q_lower in {"show tables", "list tables", "tables", "get tables"}:
+    if q_lower in TABLE_LIST_PHRASES:
         table_list = "\n".join(f"- {t}" for t in table_names)
         dialect = (db_type or "").lower()
 
@@ -620,8 +621,8 @@ def generate_schema_aware_sql(
 
     # --------------------------------------------------------
     # Case 0: Lookup by Register Number, Roll Number, ID, or Code
-    # (FIX: value must contain a digit, so "regarding", "ids", "roll"
-    #  are no longer captured as fake register numbers/IDs.)
+    # (value must contain a digit, so "regarding", "ids", "roll"
+    #  are not captured as fake register numbers/IDs.)
     # --------------------------------------------------------
     reg_match = re.search(
         r"\b(?:register|reg|roll|registration)"
@@ -775,6 +776,35 @@ def generate_schema_aware_sql(
                     f"FROM {target_table} "
                     f"GROUP BY {group_col} "
                     f"ORDER BY {alias} {order_dir};"
+                )
+            }
+
+    # --------------------------------------------------------
+    # Case 1b: "which department has the highest/lowest average cgpa"
+    # --------------------------------------------------------
+    which_avg = re.search(
+        r"\bwhich\s+(\w+)\b.*\b(highest|lowest|best|worst|top)\b.*\b(?:average|avg|mean)\b",
+        q_lower,
+    )
+
+    if which_avg:
+        group_col = col_map.get(which_avg.group(1))
+        metric_col = None
+
+        for candidate in ["cgpa", "salary", "marks", "attendance_percentage", "attendance"]:
+            if candidate in col_map and candidate in q_lower:
+                metric_col = col_map[candidate]
+                break
+
+        if group_col and metric_col:
+            direction = "ASC" if which_avg.group(2) in ("lowest", "worst") else "DESC"
+            alias = f"avg_{metric_col}"
+            return {
+                "sql": (
+                    f"SELECT {group_col}, ROUND(AVG({metric_col}), 2) AS {alias} "
+                    f"FROM {target_table} "
+                    f"GROUP BY {group_col} "
+                    f"ORDER BY {alias} {direction} LIMIT 1;"
                 )
             }
 
@@ -988,6 +1018,25 @@ def generate_schema_aware_sql(
     elif explicit_limit:
         order_clause = f" LIMIT {explicit_limit}"
 
+    # "sorted by cgpa", "ordered by name descending"
+    sort_match = re.search(
+        r"\b(?:sorted|ordered|order|sort)\s+by\s+([a-z_ ]+?)"
+        r"(?:\s+(asc|ascending|desc|descending))?\s*(?:$|limit\b)",
+        q_lower,
+    )
+
+    if sort_match and not order_clause:
+        sort_col = col_map.get(sort_match.group(1).strip().replace(" ", "_"))
+
+        if sort_col:
+            if sort_match.group(2):
+                direction = "ASC" if sort_match.group(2).startswith("asc") else "DESC"
+            else:
+                numeric_cols = {"cgpa", "salary", "marks", "attendance_percentage"}
+                direction = "DESC" if sort_col.lower() in numeric_cols else "ASC"
+
+            order_clause = f" ORDER BY {sort_col} {direction}"
+
     where_clause = (
         f" WHERE {' AND '.join(where_conditions)}" if where_conditions else ""
     )
@@ -1036,18 +1085,29 @@ def generate_schema_aware_sql(
             }
 
     # Output projection: honour the columns the user asked to see.
-    requested_cols = resolve_requested_columns(
-        q_lower, col_map, get_name_columns() or []
-    )
+    name_cols_now = get_name_columns() or []
+    requested_cols = resolve_requested_columns(q_lower, col_map, name_cols_now)
 
     if requested_cols and requested_cols != ["*"]:
         selected_cols = requested_cols
+
+        # "top 3 students by cgpa" -> also show who the student is
+        table_lower = target_table.lower()
+        entity_mentioned = (
+            _has_word(q_lower, table_lower)
+            or _has_word(q_lower, table_lower.rstrip("s"))
+        )
+        has_name = any(c in selected_cols for c in name_cols_now)
+
+        if name_cols_now and entity_mentioned and not has_name:
+            selected_cols = name_cols_now + selected_cols
     else:
         selected_cols = ["*"]
 
     sql = f"SELECT {', '.join(selected_cols)} FROM {target_table}{where_clause}{order_clause}"
 
-    if not order_clause:
+    # Add the default row limit unless the query already has a LIMIT.
+    if "LIMIT" not in order_clause:
         sql += " LIMIT 100"
 
     sql += ";"
@@ -1056,7 +1116,7 @@ def generate_schema_aware_sql(
 
 
 # ============================================================
-# 7. GROUNDED LLM FALLBACK  (your Fix A, made safe)
+# 7. GROUNDED LLM FALLBACK
 # ============================================================
 # Used ONLY when the rule-based generator cannot understand the question.
 # The LLM gets the REAL schema, writes ONE SELECT, and we then:
@@ -1297,6 +1357,7 @@ def query_database(
                 "result": result["direct_result"],
                 "query": question,
                 "executed_sql": generated_sql,
+                "generation_mode": generation_mode,
                 "database_name": active_db,
                 "database_id": connection_id,
                 "timestamp": timestamp,
@@ -1311,7 +1372,7 @@ def query_database(
                 validation_error,
             )
 
-        # NEW: final guard - every table in the SQL must exist in this DB.
+        # Final guard - every table in the SQL must exist in this DB.
         unknown_tables = find_unknown_tables(generated_sql, schema)
 
         if unknown_tables:
