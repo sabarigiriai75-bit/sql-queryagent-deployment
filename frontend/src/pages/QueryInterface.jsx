@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import VisualFlow from '../components/VisualFlow';
+import { API_BASE } from '../api';
 
 export default function QueryInterface({ selectedDbId, onSelectDb }) {
   const [databases, setDatabases] = useState([]);
@@ -28,7 +29,7 @@ export default function QueryInterface({ selectedDbId, onSelectDb }) {
 
   const fetchDatabases = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/api/databases/list');
+      const res = await axios.get(`${API_BASE}/api/databases/list`);
       if (res.data && Array.isArray(res.data.databases)) {
         const list = res.data.databases;
         setDatabases(list);
@@ -57,7 +58,7 @@ export default function QueryInterface({ selectedDbId, onSelectDb }) {
 
   const fetchHistory = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/api/query-history');
+      const res = await axios.get(`${API_BASE}/api/query-history`);
       if (res.data && Array.isArray(res.data.history)) {
         setHistory(res.data.history);
       }
@@ -88,7 +89,7 @@ export default function QueryInterface({ selectedDbId, onSelectDb }) {
     setResult(null);
 
     try {
-      const res = await axios.post('http://localhost:8000/api/query', {
+      const res = await axios.post(`${API_BASE}/api/query`, {
         query: qToRun,
         connection_id: selectedDb,
         user_id: 'user1',

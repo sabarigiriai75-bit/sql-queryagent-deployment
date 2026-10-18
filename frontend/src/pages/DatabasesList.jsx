@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE } from '../api';
 
 // Supported Database Engines Configuration
 const ENGINE_CONFIGS = {
@@ -72,7 +73,7 @@ export default function DatabasesList({ onSelectDatabaseForQuery, onOpenQueryTab
   const fetchDatabases = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:8000/api/databases/list');
+      const res = await axios.get(`${API_BASE}/api/databases/list`);
       if (res.data && Array.isArray(res.data.databases)) {
         setDatabases(res.data.databases);
       } else {
@@ -90,7 +91,7 @@ export default function DatabasesList({ onSelectDatabaseForQuery, onOpenQueryTab
     if (!window.confirm(`Are you sure you want to disconnect "${name}"?`)) return;
 
     try {
-      const res = await axios.delete(`http://localhost:8000/api/databases/${id}`);
+      const res = await axios.delete(`${API_BASE}/api/databases/${id}`);
       if (res.data && res.data.success) {
         setDatabases(prev => prev.filter(db => db.id !== id));
         showToast(`Disconnected "${name}"`, 'success');
@@ -124,7 +125,7 @@ export default function DatabasesList({ onSelectDatabaseForQuery, onOpenQueryTab
 
     setSubmitting(true);
     try {
-      const res = await axios.post('http://localhost:8000/api/databases/add', {
+      const res = await axios.post(`${API_BASE}/api/databases/add`, {
         ...addForm,
         port: parseInt(addForm.port) || 3306
       });

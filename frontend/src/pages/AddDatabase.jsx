@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_BASE } from '../api';
 
 const ENGINE_CONFIGS = {
   mysql: { name: 'MySQL', defaultPort: 3306, icon: '🐬' },
@@ -43,7 +44,7 @@ export default function AddDatabase({ onSuccessRedirect, onCancel }) {
     setMessage(null);
     try {
       const response = await axios.post(
-        'http://localhost:8000/api/databases/add',
+        `${API_BASE}/api/databases/add`,
         formData
       );
       setMessage({ type: 'success', text: 'Connected: ' + response.data.message });
