@@ -1,0 +1,21 @@
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Test caches
+.pytest_cache/
+
+# Frontend dependencies
+frontend/node_modules/
+frontend/dist/
+
+# Logs
+*.log

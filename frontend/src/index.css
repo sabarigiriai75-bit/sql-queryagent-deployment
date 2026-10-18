@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg-primary: #000000;
+  --bg-secondary: #080808;
+  --bg-card: #101010;
+  --bg-card-hover: #161616;
+  --border-subtle: rgba(255, 255, 255, 0.10);
+  --border-focus: rgba(255, 255, 255, 0.25);
+  
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A0A0;
+  --text-muted: #666666;
+  
+  --accent-blue: #3B82F6;
+  --accent-blue-hover: #2563EB;
+  --accent-blue-bg: rgba(59, 130, 246, 0.12);
+  --accent-green: #10B981;
+
+  /* ===== CHANGE ONLY THIS VALUE TO RESIZE THE PAGE WIDTH ===== */
+  --page-max-width: 1400px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 19px;              /* was 15px */
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== PAGE WIDTH ===== */
+.page-container {
+  width: 100% !important;
+  max-width: var(--page-max-width) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* Cards grid: 1 / 2 / 3 / 4 columns depending on screen width */
+.db-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+/* Headings */
+h1 {
+  font-size: 42px;              /* was 34px */
+  font-weight: 1000;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 26px;              /* was 21px */
+  font-weight: 1000;
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: 25px;              /* was 17px */
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+h4 {
+  font-size: 20px;              /* was 16px */
+  font-weight: 900;
+  line-height: 1.4;
+}
+
+/* Form inputs & typography */
+input, select, textarea, button {
+  font-family: inherit;
+  font-size: 19px;              /* was 15px */
+}
+
+textarea {
+  font-size: 22px;              /* was 18px */
+  line-height: 1.6;
+}
+
+/* Placeholder styling */
+::placeholder {
+  font-size: 20px;              /* was 15px */
+  color: #666666;
+  opacity: 1;
+}
+
+input::placeholder,
+textarea::placeholder {
+  font-size: 22px;              /* was 15px */
+  color: #666666;
+  opacity: 1;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: #222222;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #333333;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.animate-modal {
+  animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Code & SQL Blocks */
+code, pre {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;              /* was 14.5px */
+  line-height: 1.55;
+}
+
+/* Table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+th {
+  background: #141414;
+  color: var(--text-secondary);
+  font-size: 17px;              /* was 14px */
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+td {
+  padding: 13px 18px;
+  font-size: 19px;              /* was 15px */
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 32px;            /* was 26px */
+  }
+  .page-container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
