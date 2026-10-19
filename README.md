@@ -7,7 +7,8 @@ An AI-powered web app that lets anyone query a database in plain English. The us
 📘 **API Docs (Swagger):** https://sql-queryagent-backend.onrender.com/docs
 
 👨‍💻 **Developer:** [sabarigiriai75-bit](https://github.com/sabarigiriai75-bit)
-💼 LinkedIn: Sabari Giri
+
+💼 **LinkedIn:** [Sabari Giri](https://www.linkedin.com/in/sabari-giri-57728032a)
 
 
 
