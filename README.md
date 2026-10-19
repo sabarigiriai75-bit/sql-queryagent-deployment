@@ -4,8 +4,13 @@ SQL QueryAgent: project description
 Overview
 SQL QueryAgent is a web app where a user types a question in plain English (for example, “Show the top 5 customers by total sales this month”) and gets the answer from a MySQL database. An LLM turns the question into a SQL query, the backend checks that the query is safe, and only then runs it. Users never need to know SQL.
 
-Tech stack
+🚀 Live Demo
+Try the application: [(https://sabari-sql-agent-frontend-copy.onrender.com/)](https://sabari-sql-agent-frontend-copy.onrender.com/)
 
+👨‍💻 Developer
+GitHub: [https://github.com/sabarigiriai75-bit](https://github.com/sabarigiriai75-bit)
+
+Tech stack
 Layer	Technology	Role
 Frontend	React	Question box, results table, query history
 Backend	FastAPI (Python)	REST API, authentication, AI and security logic
