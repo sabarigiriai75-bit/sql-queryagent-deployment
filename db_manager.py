@@ -22,8 +22,10 @@ class DatabaseManager:
 
         if db_type == "mysql":
             port = conn.port if conn.port else 3306
-            return f"mysql+pymysql://{encoded_username}:{encoded_password}@{conn.host}:{port}/{conn.database}"
-
+return (
+    f"postgresql+psycopg2://{encoded_username}:{encoded_password}"
+    f"@{conn.host}:{port}/{conn.database}?sslmode=require"
+)
         elif db_type == "postgresql":
             port = conn.port if conn.port else 5432
             return f"postgresql://{encoded_username}:{encoded_password}@{conn.host}:{port}/{conn.database}"
