@@ -3,8 +3,13 @@
 An AI-powered web app that lets anyone query a database in plain English. The user types a question, the backend turns it into a safe SQL query, runs it, and shows the results in a table. No SQL knowledge needed. ✨
 
 🚀 **Live Demo:** https://sabari-sql-agent-frontend-copy.onrender.com/
+
 📘 **API Docs (Swagger):** https://sql-queryagent-backend.onrender.com/docs
+
 👨‍💻 **Developer:** [sabarigiriai75-bit](https://github.com/sabarigiriai75-bit)
+💼 LinkedIn: Sabari Giri
+
+
 
 ---
 
